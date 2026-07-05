@@ -29,8 +29,7 @@ jobs:
             cd "${{ inputs.working-directory }}"
           fi
           echo "=> Executando comandos de teste"
-          printf "%s
-" "${{ inputs.test-commands }}" > /tmp/ci-test-commands.sh
+          printf "%s\n" "${{ inputs.test-commands }}" > /tmp/ci-test-commands.sh
           if [ "${{ inputs.shell }}" = "pwsh" ]; then
             pwsh -File /tmp/ci-test-commands.sh
           else

@@ -45,6 +45,16 @@ on:
         required: false
         type: string
         default: docker.io
+      create-repo:
+        description: 'Se true, cria o repositório no Docker Hub se não existir'
+        required: false
+        type: boolean
+        default: false
+      is-private:
+        description: 'Se true, cria o repositório Docker Hub como privado'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   release:
@@ -68,6 +78,57 @@ jobs:
           if [ -z "${{ inputs.tags }}" ]; then
             echo "Erro: 'tags' é obrigatório quando 'docker-push' é true" >&2
             exit 1
+          fi
+
+      - name: Prepare Docker Hub repository
+        if: ${{ inputs.docker-push == true && inputs.create-repo == true }}
+        run: |
+          set -e
+          if [ -n "${{ inputs.image }}" ]; then
+            image_name="${{ inputs.image }}"
+          else
+            prime_tag=$(printf "%s" "${{ inputs.tags }}" | cut -d',' -f1 | xargs)
+            prime_tag=${prime_tag#docker.io/}
+            prime_tag=${prime_tag#registry.hub.docker.com/}
+            image_name=${prime_tag%%:*}
+          fi
+          image_name=${image_name#https://}
+          image_name=${image_name#http://}
+          if [[ "$image_name" != */* ]]; then
+            namespace="${{ secrets.DOCKERHUB_USERNAME }}"
+            repo="$image_name"
+          else
+            namespace="${image_name%%/*}"
+            repo="${image_name#*/}"
+          fi
+          echo "Docker Hub namespace=$namespace repo=$repo"
+          auth_response=$(curl -s -X POST "https://hub.docker.com/v2/users/login/" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\": \"${{ secrets.DOCKERHUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKERHUB_TOKEN }}\"}")
+          token=$(printf "%s" "$auth_response" | python3 -c 'import sys, json; data=json.load(sys.stdin); print(data.get("token", ""))')
+          if [ -z "$token" ]; then
+            echo "Erro ao autenticar no Docker Hub. Verifique DOCKERHUB_USERNAME/DOCKERHUB_TOKEN." >&2
+            echo "Resposta: $auth_response" >&2
+            exit 1
+          fi
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: JWT $token" \
+            "https://hub.docker.com/v2/repositories/${namespace}/${repo}/")
+          if [ "$status" = "404" ]; then
+            echo "Repositorio nao existe. Criando ${namespace}/${repo}..."
+            create_response=$(curl -s -X POST "https://hub.docker.com/v2/repositories/" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: JWT $token" \
+              -d "{\"namespace\": \"$namespace\", \"name\": \"$repo\", \"is_private\": ${{ inputs.is-private }}}")
+            echo "$create_response"
+            if echo "$create_response" | python3 -c 'import sys, json; data=json.load(sys.stdin); print(data.get("name") if isinstance(data, dict) else "")' | grep -q .; then
+              echo "Repositorio criado com sucesso."
+            else
+              echo "Falha ao criar repositorio Docker Hub." >&2
+              exit 1
+            fi
+          else
+            echo "Repositorio ja existe no Docker Hub: ${namespace}/${repo} (status $status)."
           fi
 
       - name: Set up QEMU

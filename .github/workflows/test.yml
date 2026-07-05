@@ -1,0 +1,33 @@
+name: Reusable Test
+
+on:
+  workflow_call:
+    inputs:
+      test-commands:
+        description: 'Comandos de teste (multi-linha ou separados por &&)'
+        required: true
+        type: string
+      working-directory:
+        description: 'Diretório de trabalho relativo ao repositório'
+        required: false
+        type: string
+      shell:
+        description: 'Shell para execução (bash, pwsh, sh)'
+        required: false
+        type: string
+        default: bash
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run test commands
+        run: |
+          set -e
+          if [ -n "${{ inputs.working-directory }}" ]; then
+            cd "${{ inputs.working-directory }}"
+          fi
+          echo "=> Executando comandos de teste"
+          ${{ inputs.test-commands }}
+        shell: ${{ inputs.shell }}

@@ -1,0 +1,33 @@
+name: Reusable Release
+
+on:
+  workflow_call:
+    inputs:
+      release-commands:
+        description: 'Comandos de release/publish (multi-linha ou separados por &&)'
+        required: true
+        type: string
+      working-directory:
+        description: 'Diretório de trabalho relativo ao repositório'
+        required: false
+        type: string
+      shell:
+        description: 'Shell para execução (bash, pwsh, sh)'
+        required: false
+        type: string
+        default: bash
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run release commands
+        run: |
+          set -e
+          if [ -n "${{ inputs.working-directory }}" ]; then
+            cd "${{ inputs.working-directory }}"
+          fi
+          echo "=> Executando comandos de release"
+          ${{ inputs.release-commands }}
+        shell: ${{ inputs.shell }}

@@ -54,7 +54,7 @@ on:
         description: 'Se true, cria o repositório Docker Hub como privado'
         required: false
         type: boolean
-        default: false
+        default: true
 
 jobs:
   release:
@@ -69,8 +69,7 @@ jobs:
             cd "${{ inputs.working-directory }}"
           fi
           echo "=> Executando comandos de release"
-          printf "%s
-" "${{ inputs.release-commands }}" > /tmp/ci-release-commands.sh
+          printf "%s\n" "${{ inputs.release-commands }}" > /tmp/ci-release-commands.sh
           if [ "${{ inputs.shell }}" = "pwsh" ]; then
             pwsh -File /tmp/ci-release-commands.sh
           else

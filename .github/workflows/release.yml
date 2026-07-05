@@ -69,8 +69,13 @@ jobs:
             cd "${{ inputs.working-directory }}"
           fi
           echo "=> Executando comandos de release"
-          ${{ inputs.release-commands }}
-        shell: ${{ inputs.shell }}
+          printf "%s
+" "${{ inputs.release-commands }}" > /tmp/ci-release-commands.sh
+          if [ "${{ inputs.shell }}" = "pwsh" ]; then
+            pwsh -File /tmp/ci-release-commands.sh
+          else
+            bash /tmp/ci-release-commands.sh
+          fi
 
       - name: Validate docker push inputs
         if: ${{ inputs.docker-push == true }}

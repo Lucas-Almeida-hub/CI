@@ -29,5 +29,10 @@ jobs:
             cd "${{ inputs.working-directory }}"
           fi
           echo "=> Executando comandos de lint"
-          ${{ inputs.lint-commands }}
-        shell: ${{ inputs.shell }}
+          printf "%s
+" "${{ inputs.lint-commands }}" > /tmp/ci-lint-commands.sh
+          if [ "${{ inputs.shell }}" = "pwsh" ]; then
+            pwsh -File /tmp/ci-lint-commands.sh
+          else
+            bash /tmp/ci-lint-commands.sh
+          fi

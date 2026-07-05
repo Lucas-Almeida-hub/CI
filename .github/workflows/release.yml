@@ -12,11 +12,7 @@ on:
         description: 'Diretório de trabalho relativo ao repositório'
         required: false
         type: string
-      shell:
-        description: 'Shell para execução (bash, pwsh, sh)'
-        required: false
-        type: string
-        default: bash
+      # Nota: suporte a multiplos shells removido por compatibilidade; executa via bash
       docker-push:
         description: 'Se true, constrói e envia imagem para registro (ex: Docker Hub)'
         required: false
@@ -70,11 +66,7 @@ jobs:
           fi
           echo "=> Executando comandos de release"
           printf "%s\n" "${{ inputs.release-commands }}" > /tmp/ci-release-commands.sh
-          if [ "${{ inputs.shell }}" = "pwsh" ]; then
-            pwsh -File /tmp/ci-release-commands.sh
-          else
-            bash /tmp/ci-release-commands.sh
-          fi
+          bash /tmp/ci-release-commands.sh
 
       - name: Validate docker push inputs
         if: ${{ inputs.docker-push == true }}

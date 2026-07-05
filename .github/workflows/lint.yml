@@ -11,11 +11,7 @@ on:
         description: 'Diretório de trabalho relativo ao repositório'
         required: false
         type: string
-      shell:
-        description: 'Shell para execução (bash, pwsh, sh)'
-        required: false
-        type: string
-        default: bash
+      # Nota: suporte a multiplos shells removido por compatibilidade; executa via bash
 
 jobs:
   lint:
@@ -30,8 +26,4 @@ jobs:
           fi
           echo "=> Executando comandos de lint"
           printf "%s\n" "${{ inputs.lint-commands }}" > /tmp/ci-lint-commands.sh
-          if [ "${{ inputs.shell }}" = "pwsh" ]; then
-            pwsh -File /tmp/ci-lint-commands.sh
-          else
-            bash /tmp/ci-lint-commands.sh
-          fi
+          bash /tmp/ci-lint-commands.sh

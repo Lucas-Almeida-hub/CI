@@ -51,6 +51,11 @@ on:
         required: false
         type: boolean
         default: true
+      platforms:
+        description: 'Plataformas de build separadas por vírgula (ex: linux/amd64,linux/arm64)'
+        required: false
+        type: string
+        default: linux/amd64,linux/arm64
     secrets:
       DOCKERHUB_USERNAME:
         description: 'Usuário do Docker Hub'
@@ -158,4 +163,5 @@ jobs:
           file: ${{ inputs.dockerfile }}
           push: true
           tags: ${{ inputs.tags }}
+          platforms: ${{ inputs.platforms }}
 
